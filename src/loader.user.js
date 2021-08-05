@@ -21,7 +21,7 @@
         const names = ["vendor.js", "main.js"];
 
         for (let name of names) {
-            let data = await fetch(`${baseUrl}/js/${name}`)
+            let data = fetch(`${baseUrl}/js/${name}`)
                 .then(response => response.text());
 
             data.then(appendScript)
