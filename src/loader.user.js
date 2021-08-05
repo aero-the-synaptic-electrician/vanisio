@@ -41,5 +41,5 @@
     // then script deps  
     getAndLoadDependencies();
 })(
-    "https://raw.githubusercontent.com/aero-the-synaptic-electrician/vanisio-client/main"
+    "https://raw.githubusercontent.com/aero-the-synaptic-electrician/vanisio/main"
 );
