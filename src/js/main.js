@@ -1,3 +1,9 @@
+/**
+ * @author Aero
+ * @version 65b0
+ * @description Deobfuscated and readable version of the Vanis.io client that is fully functional
+ */
+
 (function(modules) {
     function webpackJsonpCallback(data) {
         var chunkIds = data[0],
