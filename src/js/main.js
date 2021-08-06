@@ -336,8 +336,10 @@
             if (node.pid === hostPid || node.pid === multiPid) {
                 var mass = node.getMass();
 
-                x += node.x * wSize;
-                y += node.y * wSize;
+                score += mass;
+
+                x += node.x * mass;
+                y += node.y * mass;
 
                 overallSize += node.nSize;
 
