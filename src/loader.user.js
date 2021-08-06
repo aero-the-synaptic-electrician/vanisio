@@ -24,7 +24,8 @@
             let data = fetch(`${baseUrl}/js/${name}`)
                 .then(response => response.text());
 
-            data.then(appendScript)
+            // wait for script to load then continue
+            await data.then(appendScript)
                 .catch(() => {
                     throw new Error(`Failed to load dependency ${name}`);
                 });
