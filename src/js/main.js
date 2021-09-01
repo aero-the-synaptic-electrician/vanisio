@@ -4,7 +4,7 @@
  * @description Deobfuscated and readable version of the Vanis.io client that is fully functional
  */
 
-(function(modules) {
+ (function(modules) {
     function webpackJsonpCallback(data) {
         var chunkIds = data[0],
             moreModules = data[1],
@@ -191,7 +191,7 @@
         e.utf8(t), e.utf8(s), e.utf8(a)
     }
 
-    g.clientVersion = 16;
+    g.clientVersion = 18;
     g.currentWsId = null;
     g.events = new c;
     g.settings = n;
@@ -3368,7 +3368,7 @@ function(module) {
         }, e._l(e.regionServers, function(t, a) {
             return s("div", {
                 key: a,
-                staticClass: "vanis-list-item",
+                staticClass: "server-list-item",
                 class: {
                     active: e.gameState.connectionUrl === t.url, "cursor-loading": e.connectWait
                 },
