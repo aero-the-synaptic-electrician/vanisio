@@ -2,7 +2,7 @@
 // @name         Loader for customized Vanis.io client
 // @version      1.0.0
 // @author       Aero
-// @match        *://vanis.io/example-client
+// @match        *://vanis.io/vanilla
 // @run-at       document-start
 // ==/UserScript==
 
