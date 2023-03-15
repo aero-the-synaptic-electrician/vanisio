@@ -2521,28 +2521,22 @@ window.SmartBuffer = SmartBuffer;
 	 */
 	const addOrUpdate = (data, tick) => {
 		const type = data.type & 0x0f;
-		let {id, pid, x, y, size, flags} = data;
+		const {id} = data;
 
-		if (size === null) {
+		if ((data.x == null || data.size == null) && (type == 3 || type == 4)) {
 			const {food} = gameObject;
-			if (type === 4) {
-				size = food.minSize + id % food.stepSize || 1;
-			} else if (type === 3) {
-				size = food.ejectedSize || 1;
+			const s = data.size = ((type == 3) ? food.ejectedSize || 1 : food.minSize + id % food.stepSize || 1);
+
+			if (type == 4) {
+				const {border} = gameObject;
+				data.x = border.minx + s + (border.width-2 * s) * gameObject.seededRandom(65536 + id);
+				data.y = border.miny + s + (border.height-2 * s) * gameObject.seededRandom(131072 + id);
 			}
-			data.size = size;
 		}
-
-		if (x === null && type === 4) {
-			const {border} = gameObject;
-			x = data.x = border.minx + size + (border.width - 2 * size) * gameObject.seededRandom(65536 + id);
-			y = data.y = border.miny + size + (border.height - 2 * size) * gameObject.seededRandom(131072 + id);
-		}
-
+		
 		const {nodes} = gameObject;
 
-		const existing = (id in nodes);
-		let node = existing ? nodes[id] : null;
+		let node = (id in nodes) ? nodes[id] : null;
 
 		if (node) {
 			node.update();
@@ -2552,7 +2546,7 @@ window.SmartBuffer = SmartBuffer;
 		} else {
 			switch (type) {
 				case 1: {
-					const playerObj = gameObject.playerManager.getPlayer(pid);
+					const playerObj = gameObject.playerManager.getPlayer(data.pid);
 					data.texture = playerObj.texture;
 					node = new PlayerCell(data, playerObj);
 					break;
@@ -2579,10 +2573,10 @@ window.SmartBuffer = SmartBuffer;
 				}
 
 				default: {
-					let color = 0x404040,
-						square = false;
-
-					if (flags) {
+					let color=0x404040, square=false;
+					
+					const flags = data.flags;
+					if (flags > 1) {
 						color = 0;
 
 						if (flags & 0x80) {
@@ -2608,7 +2602,7 @@ window.SmartBuffer = SmartBuffer;
 			}
 
 			const {scene} = gameObject;
-			scene[!!(flags & 1) ? 'addFood' : 'addCell'](node.sprite);
+			scene[(type & 3) ? 'addCell' : 'addFood'](node.sprite);
 
 			node.createTick = tick;
 
@@ -2617,12 +2611,14 @@ window.SmartBuffer = SmartBuffer;
 			nodes[id] = node;
 		}
 
-		if (x !== null) {
+		const {x, y} = data;
+		if (x != null) {
 			node.nx = x;
 			node.ny = y;
 		}
 
-		if (size !== null) {
+		const {size} = data;
+		if (size != null) {
 			node.nSize = size;
 		}
 
@@ -2652,15 +2648,16 @@ window.SmartBuffer = SmartBuffer;
 	const remove = (pid, aid) => {
 		const {nodes} = gameObject;
 		const prey = nodes[pid];
-		const attacker = nodes[aid];
 		if (!prey) return;
+		const attacker = nodes[aid];
 		if (!attacker) return void prey.destroy();
 		prey.update();
 		prey.destroy(settings.eatAnimation);
 		prey.nx = attacker.x;
 		prey.ny = attacker.y;
+		const s = prey.nSize;
 		prey.nSize = 0;
-		prey.newPositionScale = Math.min(Math.max(prey.size / attacker.nSize, 0), 1);
+		prey.newPositionScale = 0;
 		prey.updateTime = gameObject.timestamp;
 	}
 
@@ -2672,25 +2669,23 @@ window.SmartBuffer = SmartBuffer;
 	const parse = (buffer, orderId) => {
 		for (;;) {
 			const indicies = buffer.readUInt8(); /* type|flags */
-			if (indicies === 0) break;
+			if (indicies == 0) break;
 
 			const type = indicies & 0x0f;
 
-			const pid = (type === 1) ? buffer.readUInt16BE() : null;
+			const pid = (type == 1) ? buffer.readUInt16BE() : null;
 
 			const id = buffer.readUInt16BE();
 
 			const positionChanged = !(indicies & 0x20);
-			let x = null, y = null;
+			let x=null, y=null;
 
 			if (positionChanged) {
 				x = buffer.readInt16BE();
 				y = buffer.readInt16BE();
 			}
 
-			const size = !(indicies & 0x40) ? buffer.readUInt16BE() : null;
-
-			const extraFlags = (indicies << 24 >> 24) < 0 ? buffer.readUInt8() : 0;
+			const size = !(indicies & 0x40) ? buffer.readUInt16BE() : 0;
 
 			const data = {
 				type: indicies, /* pass raw indicies as 'type' */
@@ -2698,8 +2693,13 @@ window.SmartBuffer = SmartBuffer;
 				id,
 				x, y,
 				size,
-				flags: (extraFlags | (type === 4 | (extraFlags > 15)))
+				flags: +(type == 4)
 			};
+
+			if ((indicies<<24>>24) < 0) {
+				const flags = buffer.readUInt8();
+				data.flags = (flags | (data.flags | +(flags > 0x0f)));
+			}
 
 			addOrUpdate(data, orderId);
 		}
@@ -2951,11 +2951,13 @@ window.SmartBuffer = SmartBuffer;
 				delete node.nameSprite;
 			});
 
+			const newStyle = this.game.settings.nameTextStyle;
+
 			gameObject.playerManager.players.forEach(p => {
 				const {nameSprite:sprite} = p;
 				if (!sprite) return;
 				const os = sprite.style.fill;
-				sprite.style = e;
+				sprite.style = newStyle;
 				sprite.style.fill = os;
 				sprite.updateText();
 			});
@@ -3150,7 +3152,7 @@ window.SmartBuffer = SmartBuffer;
 			while (i < list.length) {
 				const pid = list[i];
 				if (!this.players.has(pid)) {
-					list.splice(index, 1);
+					list.splice(i, 1);
 					continue;
 				}
 				const player = this.players.get(pid);
@@ -5287,7 +5289,7 @@ window.SmartBuffer = SmartBuffer;
 						name: e.name,
 						slots: e.slots,
 						checkInUrl: e.checkInUrl
-					}, s.connection.preopen(e.url), setTimeout(() => this.connectWait--, 3200)
+					}, s.connection.open(e.url), setTimeout(() => this.connectWait--, 3200)
 				},
 				"checkBadSkinUrl"() {
 					var e = document.getElementById("skinurl").value;
@@ -8060,7 +8062,7 @@ window.SmartBuffer = SmartBuffer;
 					"margin-right": "7px"
 				}
 			}, [e._v(e._s(e.xpAtNextLevel))])])], 1), e._v(" "), s("div", {
-				staticClass: "logout",
+				staticClass: "logout_",
 				on: {
 					click: function() {
 						return e.logout()
@@ -8068,7 +8070,7 @@ window.SmartBuffer = SmartBuffer;
 				}
 			}, [s("i", {
 				staticClass: "fas fa-sign-out-alt"
-			}), e._v(" Logout\n        ")])]) : e._e()])
+			})])]) : e._e()])
 		};
 	Ge._withStripped = true;
 	var Ze = function() {
@@ -8087,12 +8089,18 @@ window.SmartBuffer = SmartBuffer;
 	Ze._withStripped = true;
 	var Ke = d(226),
 		qe = Object(t.a)({
-			props: ["progress"]
-		}, Ze, [], false, null, "4e838c74", null);
-	qe.options.__file = "src/components/progressBar.vue";
+			// props: ["progress"]
+			props: {
+				progress: {
+					type: Number,
+					required: true
+				}
+			}
+		}, Ze, [], false, null, "55dc99fa", null);
+	qe.options.__file = "src/components/progress-bar.vue";
 	var Xe = qe.exports,
 		Ye = d(228),
-		Je = d(5),
+		Swal = d(5),
 		Qe = d(1),
 		et = d(229),
 		tt = d(230),
@@ -8131,28 +8139,40 @@ window.SmartBuffer = SmartBuffer;
 					this.accountTime = Date.now();
 					if (Ye.vanisToken) this.loadUserData()
 				},
-				async "loadUserData"() {
+				async loadUserData() {
 					this.loading = true;
-					try {
-						var e = await Ye.get("/me")
-					} catch (e) {
+					const response = await Ye.get('/me');
+					if (!response.ok) {
 						this.loading = false;
-						var t = e.response;
-						if (!t) return;
-						console.error("Account:", t.data);
-						if (t.status === 401) Ye.clearToken();
-						return
+						console.error("Account:", response.status, response.statusText);
+						if (response.status === 401) {
+							Ye.clearToken();		
+						} else if (response.status === 503) {
+							Swal.alert(await response.text());
+						}
+						return;
 					}
-					this.setAccountData(e), this.updateProgress(this.account.xp, this.account.level), this.loading = false
+					const data = await response.json();
+					this.setAccountData(data);
+					this.updateProgress(this.account.xp, this.account.level);
+					this.loading = false;
 				},
-				async "logout"() {
+
+				async logout() {
 					try {
-						await Ye.call("DELETE", "/me")
-					} catch (t) {
-						var e = t.response;
-						if (e && e.status !== 401) Je.alert("Error: " + t.message)
+						await Ye.call('DELETE', '/me');
+					} catch (error) {
+						const {response} = error;
+						if (response && response.status !== 401) {
+							Swal.alert(`Error: ${error.message}`);
+						}
 					}
-					Ye.clearToken(), this.account = null, this.name = null, this.nameColor = null, this.avatarUrl = null, Qe.ownUid = null
+					Ye.clearToken();
+					this.account = null;
+					this.name = null;
+					this.nameColor = null;
+					this.avatarUrl = null;
+					Ge.ownUid = null;
 				},
 				"getAvatarUrl"(e, t) {
 					if (t) return "https://cdn.discordapp.com/avatars/" + e + "/" + t + ".png";
@@ -8186,7 +8206,7 @@ window.SmartBuffer = SmartBuffer;
 				s = e._self._c || t;
 			return s("div", {
 				attrs: {
-					id: "skins-container"
+					id: "customization"
 				}
 			}, [s("div", {
 				attrs: {
