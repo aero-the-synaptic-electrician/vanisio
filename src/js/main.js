@@ -2673,7 +2673,7 @@ window.SmartBuffer = SmartBuffer;
 
 			const type = indicies & 0x0f;
 
-			const pid = (type == 1) ? buffer.readUInt16BE() : null;
+			const pid = ((indicies & 0x1f) == 1) ? buffer.readUInt16BE() : null;
 
 			const id = buffer.readUInt16BE();
 
