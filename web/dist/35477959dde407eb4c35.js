@@ -1,1 +1,0 @@
-onmessage=e=>{const a={url:e.data,image:null,errored:!1};fetch(a.url,{mode:"cors"}).then((e=>e.blob())).then((e=>createImageBitmap(e))).then((e=>{a.image=e})).catch((()=>{a.errored=!0})).finally((()=>{self.postMessage(a)}))};
