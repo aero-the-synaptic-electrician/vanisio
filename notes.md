@@ -1,0 +1,2 @@
+## This repo is completely unfinished and was a WIP. Served as an experiment to see how hard it would be to port a custom client version into TypeScript (also somewhat my first interactions with TS.)
+## Unfortunately due to IRL circumstances, I may not be able to finish this client in its entirety, and thus have decided to open-source it for others to take as an opportunity to learn from.

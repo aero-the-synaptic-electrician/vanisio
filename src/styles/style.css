@@ -1,0 +1,63 @@
+@import url(https://fonts.googleapis.com/css?family=Hind+Madurai:500|Roboto|Ubuntu:700);
+
+body {
+    margin:0;
+}
+
+* {
+    font-family: 'Roboto', sans-serif;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+a {
+    color: #dadada;
+    text-decoration: none;
+}
+
+p {
+    margin: 0;
+}
+
+.swal2-close {
+    font-size: 2.5em !important;
+}
+
+.swal2-popup {
+    background-color: #151515!important;
+}
+
+.swal2-popup .swal2-title {
+    color: #dadada;
+    text-shadow: 1px 1px 2px #202020;
+}
+
+/* 
+.swal2-icon.swal2-success {
+    color: #a5dc86 !important;
+    border-color: #a5dc86 !important;
+}
+
+.swal2-icon.swal2-error {
+    color: #f27474 !important;
+    border-color: #f27474 !important;
+}
+
+.swal2-icon.swal2-warning {
+    color: #f8bb86 !important;
+    border-color: #f8bb86 !important;
+}
+
+.swal2-icon.swal2-info {
+    color: #3fc3ee !important;
+    border-color: #3fc3ee !important;
+}
+
+.swal2-icon.swal2-question {
+    color: #87adbd !important;
+    border-color: #87adbd !important;
+}
+
+*/
