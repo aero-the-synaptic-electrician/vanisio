@@ -7,7 +7,7 @@
     "scripts": {
         "production": "webpack --mode production --config config/webpack.prod.js",
         "development": "webpack --mode development --config config/webpack.dev.js",
-        "server": "http-server ./dist -a localhost -p 6969 -o"
+        "server": "node ./server.js"
     },
     "dependencies": {
         "pixi.js": "^5.3.12",
